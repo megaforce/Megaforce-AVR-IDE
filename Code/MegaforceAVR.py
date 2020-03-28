@@ -45,3 +45,8 @@ def Upload(CPUTYPE,PROGTYPE,PROGLOCATION,BAUD,PROJECTLOCATION):
     UploadString = "sudo avrdude -p " + CPUTYPE + " -c " + PROGTYPE + " -P " + PROGLOCATION + " -b " + BAUD + ' -U flash:w:' + PROJECTLOCATION
     # Runs the upload script
     os.system(UploadString)
+
+def TestBoard(CPUTYPE,PROGTYPE,PROGLOCATION,BAUD):
+    TestString = "sudo avrdude -p " + CPUTYPE + " -c " + PROGTYPE + " -P " + PROGLOCATION + " -b " + BAUD
+    # Runs the upload script
+    os.system(TestString)
