@@ -8,13 +8,14 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.setGeometry(250, 250, 800, 700)
+        self.setGeometry(250, 250, 1000, 1000)
         self.setWindowTitle("Megaforce AVR IDE")
-
+        self.setStyleSheet("background-color: rgb(200, 255, 255)")
         self.form_widget = Ui(self)
         self.setCentralWidget(self.form_widget)
 
         mainMenu = self.menuBar()
+        mainMenu.setStyleSheet("background-color: rgb(0qpl, 255, 255)")
         fileMenu = mainMenu.addMenu('Aplication')
         Tools = mainMenu.addMenu('Tools')
         helpMenu = mainMenu.addMenu('Help')
@@ -42,8 +43,11 @@ class MainWindow(QMainWindow):
         saveButton = QAction(QIcon('exit24.png'), 'Save', self)
         saveButton.setShortcut('Ctrl+S')
         saveButton.setStatusTip('Save current progress')
+        saveButton.triggered.connect(self.fileSave)
 
         loadButton = QAction(QIcon('exit24.png'), 'Load', self)
+        loadButton.setStatusTip('Loads a new file')
+        loadButton.triggered.connect(self.fileOpen)
 
         helpMenu.addAction(aboutButton)
         helpMenu.addAction(issuesButton)
@@ -55,10 +59,16 @@ class MainWindow(QMainWindow):
         Tools.addAction(uploadButton)
 
         self.show()
-    def __save(self):
-        print("Saving")
-    def __load(self):
-        print("Loading")
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.begin(self)
+        painter.end()
+
+    def fileOpen(self):
+        print()
+    def fileSave(self):
+        print()
     def __Compile(self):
         Megaforce.Comile("Test","test")
     def __Upload(self):
@@ -71,28 +81,69 @@ class Ui(QWidget):
         self.setGeometry(300,300,1280,800)
 
         self.frame = QFrame()
-        self.frame.resize(10,10)
+        layout = QGridLayout()
+        self.editor = QPlainTextEdit(self.frame)
+        self.editor.resize(self.frame.frameGeometry().width() + 50, self.frame.frameGeometry().height() + 40)
+
+        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        font.setPointSize(12)
+        self.editor.setFont(font)
+        f = open("/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c", "r")
+        self.editor.insertPlainText(f.read())
+        self.path = None
+
+        self.frame.resize(100,100)
         self.frame.setStyleSheet("background-color: rgb(200, 255, 255)")
 
         self.frame2 = QFrame()
         self.frame2.resize(50, 50)
         self.frame2.setStyleSheet("background-color: rgb(0, 255, 255)")
 
-        self.frame3 = QFrame()
-        self.frame3.resize(50, 50)
-        self.frame3.setStyleSheet("background-color: rgb(0, 0, 255)")
-
         self.frame4 = QFrame()
-        self.frame4.resize(50, 50)
-        self.frame4.setStyleSheet("background-color: rgb(50, 255, 255)")
+        self.frame4.resize(50, 25)
+        self.frame4.setStyleSheet("background-color: rgb(255, 105, 0)")
 
-        layout=QGridLayout()
-        layout.addWidget(self.frame,0,0)
-        layout.addWidget(self.frame2,0, 1, 1, 3)
-        layout.addWidget(self.frame3 ,1, 0, 1, 0)
-        layout.addWidget(self.frame4,1, 2, 1, 3)
+        self.treeview = QTreeView(self.frame4)
+        self.listview = QListView(self.frame2)
+        path = QDir.rootPath()
+
+        self.dirModel = QFileSystemModel()
+        self.dirModel.setRootPath(QDir.rootPath())
+        self.dirModel.setFilter(QDir.NoDotAndDotDot | QDir.AllDirs)
+
+        self.fileModel = QFileSystemModel()
+        self.fileModel.setFilter(QDir.NoDotAndDotDot | QDir.Files)
+
+        self.treeview.setModel(self.dirModel)
+        self.listview.setModel(self.fileModel)
+
+        self.treeview.setRootIndex(self.dirModel.index(path))
+        self.listview.setRootIndex(self.fileModel.index(path))
+
+        self.treeview.clicked.connect(self.on_clicked)
+
+        self.frame3 = QFrame()
+        self.frame3.resize(50, 25)
+        self.frame3.setStyleSheet("background-color: rgb(255, 0, 0)")
+
+        self.frame5 = QFrame()
+        self.frame5.resize(50, 25)
+        self.frame5.setStyleSheet("background-color: rgb(0, 155, 0)")
+
+        layout.addWidget(self.frame,0,0, 2, 5)
+        layout.addWidget(self.frame2,1,5,1,2)
+        layout.addWidget(self.frame3 ,3, 0, 1, 5)
+        layout.addWidget(self.frame4,0, 5, 1, 2)
+        layout.addWidget(self.frame5, 3, 5, 1, 2)
 
         self.setLayout(layout)
+
+    def getText(self):
+        return(self.editor.toPlainText())
+
+    def on_clicked(self, index):
+        path = self.dirModel.fileInfo(index).absoluteFilePath()
+        self.listview.setRootIndex(self.fileModel.setRootPath(path))
 
 def tmp():
     FILELOCATIONS = ['/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c',
