@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.Qsci import *
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -88,8 +89,6 @@ class Ui(QWidget):
         font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
         font.setPointSize(12)
         self.editor.setFont(font)
-        f = open("/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c", "r")
-        self.editor.insertPlainText(f.read())
         self.path = None
 
         self.frame.resize(100,100)
@@ -123,11 +122,39 @@ class Ui(QWidget):
         self.treeview.clicked.connect(self.on_clicked)
 
         self.frame3 = QFrame()
+        self.logs = QPlainTextEdit(self.frame3)
+
+        self.logs.resize(self.frame3.frameGeometry().width() + 50, self.frame3.frameGeometry().height()/2)
         self.frame3.resize(50, 25)
-        self.frame3.setStyleSheet("background-color: rgb(255, 0, 0)")
+
+        self.frame3.setStyleSheet("background-color: rgb(40, 40, 40)")
+
+        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        font.setPointSize(12)
+        self.logs.setFont(font)
+        self.logs.setReadOnly(True)
+        self.logs.setStyleSheet(
+        """QPlainTextEdit {background-color: #333;
+                           color: #00FF00;
+                           font-family: Courier;}""")
 
         self.frame5 = QFrame()
         self.frame5.resize(50, 25)
+        self.Save = QPushButton('Save', self.frame5)
+        self.Save.clicked.connect(self.saveFile)
+        self.Load = QPushButton('Load', self.frame5)
+        self.Load.clicked.connect(self.openFile)
+        self.Setup = QPushButton('Setup', self.frame5)
+        self.Upload = QPushButton('Upload',self.frame5)
+        self.Upload.clicked.connect(self.UploadToBoard)
+        self.Compile = QPushButton('Compile', self.frame5)
+        self.Compile.clicked.connect(self.CompileProject)
+
+        self.Save.move(0, 0)
+        self.Load.move(0, 30)
+        self.Setup.move(0, 60)
+        self.Upload.move (0, 90)
+        self.Compile.move(0,120)
         self.frame5.setStyleSheet("background-color: rgb(0, 155, 0)")
 
         layout.addWidget(self.frame,0,0, 2, 5)
@@ -145,11 +172,62 @@ class Ui(QWidget):
         path = self.dirModel.fileInfo(index).absoluteFilePath()
         self.listview.setRootIndex(self.fileModel.setRootPath(path))
 
+    @pyqtSlot()
+    def saveFile(self):
+        self.logs.insertPlainText("saving\n")
+        text = self.getText()
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
+                                                  "All Files (*);;Text Files (*.txt)", options=options)
+        if fileName:
+            self.logs.insertPlainText("Save to: " )
+        file = open(fileName, 'w')
+        self.logs.insertPlainText(file.name + "\n")
+        file.write(text)
+        file.close()
+        self.logs.insertPlainText("Saved successfully! \n")
+
+    @pyqtSlot()
+    def openFile(self):
+        self.editor.clear()
+        self.editor.insertPlainText("")
+        self.logs.insertPlainText("Opening \n")
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open file", "",
+                                                  "All Files (*);;Python Files (*.py)", options=options)
+        self.logs.insertPlainText("Opening file:")
+        if fileName:
+            self.logs.insertPlainText(fileName + "\n")
+
+        file = open (fileName, 'r')
+        self.editor.insertPlainText(file.read())
+        file.close()
+        self.logs.insertPlainText("File read successfully \n")
+
+    @pyqtSlot()
+    def CompileProject(self):
+        self.logs.insertPlainText("Compiling started :")
+        if (Megaforce.Compile("atmega328","")) == 0:
+            self.logs.insertPlainText("\n ERROR COMPILING - NO file detected\n")
+        else:
+            self.logs.insertPlainText("\nCompile succesfull\n")
+
+
+    @pyqtSlot()
+    def UploadToBoard(self):
+        self.logs.insertPlainText("Uploading started :")
+        if (Megaforce.Upload("atmega328", "","","","")) == 0:
+            self.logs.insertPlainText("\n ERROR Uploading - NO file detected\n")
+        else:
+            self.logs.insertPlainText("\nUpload succesfull\n")
 def tmp():
-    FILELOCATIONS = ['/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c',
-                     '/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/MMINIT.c',
-                     '/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/systime.c']
+    FILELOCATIONS = ['/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c']#,
+                     #'/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/MMINIT.c',
+                    # '/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/systime.c']
     CPU = "atmega328pb"
+    Megaforce.Compile(CPU,FILELOCATIONS)
 
     CPUTYPE = "m328pb"
     PROGTYPE = "arduino"
@@ -157,7 +235,7 @@ def tmp():
     BAUD = "115200"
     PROJECTLOCATION = "/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/project.hex"
 
-    Megaforce.TestBoard(CPUTYPE, PROGTYPE, PROGLOCATION, BAUD)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
