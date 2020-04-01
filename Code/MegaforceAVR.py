@@ -6,12 +6,12 @@ def Compile(projectConfigLocation):
     if not projectConfigLocation:
         return 123
     Lookup = ["CPU =","FILELOCATIONS ="]
-    Configdata = handler.GetConfigData(Lookup,projectConfigLocation)
+    Configdata = handler.GetConfigData(Lookup)
     #FILELOCATIONS =['/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c' ,
     #'/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/MMINIT.c',
     #'/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/systime.c']
     CPU = Configdata [0]
-    FILELOCATIONS = Configdata[1].split(",")
+    FILELOCATIONS = Configdata[1]
 
     # These are the files needed to store vital information for the parsing of the compile command
     CompileString = ""
@@ -81,7 +81,7 @@ def Upload(projectConfigLocation):
     if not projectConfigLocation:
         return 123
     Lookup = ["CPUTYPE =", "PROGTYPE =","PROGLOCATION =","BAUD =","PROJECTLOCATION ="]
-    Configdata = handler.GetConfigData(Lookup, projectConfigLocation)
+    Configdata = handler.GetConfigData(Lookup)
     CPUTYPE = Configdata[0]
     PROGTYPE = Configdata[1]
     PROGLOCATION = Configdata[2]

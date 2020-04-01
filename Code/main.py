@@ -1,12 +1,122 @@
 import MegaforceAVR as Megaforce
+import os
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.Qsci import *
+import ConfigHandler as handler
+
+class Setup(QMainWindow):
+    def __init__(self, parent=None):
+        super(Setup, self).__init__(parent)
+        self.setWindowTitle("Megaforce Setup Wizard")
+        self.left = 50
+        self.top = 50
+        self.width = 670
+        self.height = 300
+        self.setFixedSize(self.width, self.height)
+        self.setStyleSheet("background-color: rgb(20, 20, 20)")
+        self.form_widget = SetupLayout(self)
+        self.setCentralWidget(self.form_widget)
+
+class SetupLayout(QWidget):
+
+    def __init__(self, parent):
+        QWidget.__init__(self, parent)
+
+        layout = QGridLayout()
+        self.left = QFrame(self)
+        self.left.setStyleSheet("background-color: rgb(200, 40, 40)")
+        self.rightBottom = QFrame(self)
+        self.rightBottom.setStyleSheet("background-color: rgb(40, 40, 200)")
+        self.rightTop = QFrame(self)
+        self.rightTop.setStyleSheet("background-color: rgb(40, 200, 40)")
+        self.filesInProject = QPlainTextEdit(self.rightTop)
+        self.filesInProject.resize(self.rightTop.frameGeometry().width() + 90, self.rightTop.frameGeometry().height() + 110)
+        layout.addWidget(self.left,0,0, 2, 5)
+        layout.addWidget(self.rightTop, 0, 5, 1, 2)
+        layout.addWidget(self.rightBottom,1,5,1,2)
+
+
+        self.Confirm = QPushButton('Confirm',self.rightBottom)
+        self.Confirm.clicked.connect(self.ConfirmConfig)
+        self.Clear = QPushButton('Clear', self.rightBottom)
+        self.Clear.move(0,40)
+
+        self.form = QFormLayout(self.left)
+
+        self.CPU = QLineEdit()
+        self.CPUTYPE = QLineEdit()
+        self.PROGTYPE = QLineEdit()
+        self.PROGLOCATION = QLineEdit()
+        self.BAUD = QComboBox()
+
+
+        baudrates = [
+            self.tr('9600'),
+            self.tr('115200')
+        ]
+        self.BAUD.addItems(baudrates)
+
+        self.form.addRow(QLabel('Long CPU name'), self.CPU)
+        self.form.addRow(QLabel('Short CPU name'), self.CPUTYPE)
+
+        self.form.addRow(QLabel('Programtor'), self.PROGTYPE)
+        self.form.addRow(QLabel('Com port'), self.PROGLOCATION)
+        self.form.addRow(QLabel('BAUD'),self.BAUD)
+
+        self.AddFile = QPushButton()
+        self.AddFile.setObjectName("Search")
+        self.AddFile.setText("Search")
+        self.AddFile.clicked.connect(self.addFileIntoProject)
+        self.form.addRow(QLabel('ADD FILE'), self.AddFile)
+        self.setLayout(layout)
+
+        self.show()
+
+    @pyqtSlot()
+    def addFileIntoProject(self):
+
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open file", "",
+                                                  "All Files (*);;Python Files (*.py)", options=options)
+
+        file = str(fileName)
+        self.filesInProject.insertPlainText("#" +file +" ?\n")
+    @pyqtSlot()
+    def ConfirmConfig(self):
+        string =""
+        config = self.filesInProject.toPlainText()
+        for j in range (config.find("#")+1,config.find("?")-1):
+                string += config[j]
+        f = open("programFile.txt", "w")
+        string = string.replace(os.path.basename(string),'CONFIG.txt')
+        f.write(string)
+        f.close()
+        string = string.replace(os.path.basename(string), 'project.hex')
+        f = open(string,"w")
+        f.close()
+        f = open(string,"w")
+        tmp =   """CPU =#ENDCPU
+FILELOCATIONS =#ENDFILELOCATIONS
+CPUTYPE =#ENDCPUTYPE
+PROGTYPE =#ENDPROGTYPE
+PROGLOCATION =#ENDPROGLOCATION
+BAUD =#ENDBAUD
+PROJECTLOCATION =#ENDPROJECTLOCATION"""
+        f.write(tmp)
+        f.close()
+        handler.BuildConfigFile(self.CPU.text(),self.filesInProject.toPlainText(),self.CPUTYPE.text(),self.PROGTYPE.text(),self.PROGLOCATION.text(),self.BAUD.currentText())
+
+    @pyqtSlot()
+    def ClearConfig(self):
+        self.filesInProject.clear()
+        self.PROGLOCATION = self.PROGTYPE = self.CPUTYPE =  self.CPU = ""
 
 class MainWindow(QMainWindow):
-    global projectConfigLocation
+
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -61,11 +171,6 @@ class MainWindow(QMainWindow):
         Tools.addAction(uploadButton)
 
         self.show()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.begin(self)
-        painter.end()
 
     def fileOpen(self):
         print()
@@ -146,6 +251,7 @@ class Ui(QWidget):
         self.Load = QPushButton('Load', self.frame5)
         self.Load.clicked.connect(self.openFile)
         self.Setup = QPushButton('Setup', self.frame5)
+        self.Setup.clicked.connect(self.SetupProject)
         self.Upload = QPushButton('Upload',self.frame5)
         self.Upload.clicked.connect(self.UploadToBoard)
         self.Compile = QPushButton('Compile', self.frame5)
@@ -209,20 +315,34 @@ class Ui(QWidget):
 
     @pyqtSlot()
     def CompileProject(self):
+        file = open("programFile.txt", 'r')
+        f = file.read()
         self.logs.insertPlainText("Compiling started :")
-        if (Megaforce.Compile("atmega328","")) == 0:
-            self.logs.insertPlainText("\n ERROR COMPILING - NO file detected\n")
+        if (Megaforce.Compile(f)) == 123:
+            self.logs.insertPlainText("\n ERROR COMPILING - Empty config file detected\n")
         else:
             self.logs.insertPlainText("\nCompile succesfull\n")
 
 
     @pyqtSlot()
     def UploadToBoard(self):
+        file = open("programFile.txt", 'r')
+        f = file.read()
         self.logs.insertPlainText("Uploading started :")
-        if (Megaforce.Upload("atmega328", "","","","")) == 123:
-            self.logs.insertPlainText("\n ERROR Uploading - NO config file detected\n")
+        if (Megaforce.Upload(f)) == 123:
+            self.logs.insertPlainText("\n ERROR Uploading - Empty config file detected\n")
         else:
             self.logs.insertPlainText("\nUpload succesfull\n")
+
+    @pyqtSlot()
+    def SetupProject(self):
+        file = open("programFile.txt", 'r')
+        f = file.read()
+        file.close()
+        self.logs.insertPlainText("Setup wizard started\n")
+        dialog = Setup(self)
+        dialog.show()
+
 def tmp():
     FILELOCATIONS = ['/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c']#,
                      #'/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/MMINIT.c',
@@ -239,8 +359,9 @@ def tmp():
 
 
 if __name__ == '__main__':
+    f = open("programFile.txt", "w")
+    f.close()
     app = QApplication(sys.argv)
     QApplication.setStyle(QStyleFactory.create('Fusion'))
     myGUI = MainWindow()
-
     sys.exit(app.exec_())
