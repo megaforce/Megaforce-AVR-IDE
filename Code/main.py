@@ -6,6 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.Qsci import *
 
 class MainWindow(QMainWindow):
+    global projectConfigLocation
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -218,8 +219,8 @@ class Ui(QWidget):
     @pyqtSlot()
     def UploadToBoard(self):
         self.logs.insertPlainText("Uploading started :")
-        if (Megaforce.Upload("atmega328", "","","","")) == 0:
-            self.logs.insertPlainText("\n ERROR Uploading - NO file detected\n")
+        if (Megaforce.Upload("atmega328", "","","","")) == 123:
+            self.logs.insertPlainText("\n ERROR Uploading - NO config file detected\n")
         else:
             self.logs.insertPlainText("\nUpload succesfull\n")
 def tmp():
