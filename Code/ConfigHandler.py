@@ -40,13 +40,14 @@ def BuildConfigFile(CPU,FILELOCATIONS,CPUTYPE,PROGTYPE,PROGLOCATION,BAUD):
     strCPU = "CPU ="+CPU+"#ENDCPU"
     for i in FILELOCATIONS:
         string += i +"\n"
-    string = string [:-2]
+    string = string [:-1]
     strFILELOCATIONS = "FILELOCATIONS ="+ string +"#ENDFILELOCATIONS"
     strCPUTYPE = "CPUTYPE ="+ CPUTYPE +"#ENDCPUTYPE"
     strPROGTYPE = "PROGTYPE ="+ PROGTYPE +"#ENDPROGTYPE"
     strPROGLOCATION = "PROGLOCATION ="+ PROGLOCATION +"#ENDPROGLOCATION"
     strBAUD = "BAUD ="+ BAUD +"#ENDBAUD"
-    strPROJECTLOCATION = "PROJECTLOCATION ="+ "/home/patricija/Namizje/AVR/Test/project.hex" +"#ENDPROJECTLOCATION"
+    PROJECTLOCATION = projectConfigLocation.replace("CONFIG.txt", "project.hex")
+    strPROJECTLOCATION = "PROJECTLOCATION ="+ PROJECTLOCATION +"#ENDPROJECTLOCATION"
     insert = strCPU + "\n" + strFILELOCATIONS + "\n" + strCPUTYPE + "\n" + strPROGTYPE + "\n" + strPROGLOCATION + "\n" + strBAUD + "\n" + strPROJECTLOCATION + "\n"
     print(insert)
     f = open(projectConfigLocation,"w")

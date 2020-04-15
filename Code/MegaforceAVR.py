@@ -7,9 +7,7 @@ def Compile(projectConfigLocation):
         return 123
     Lookup = ["CPU =","FILELOCATIONS ="]
     Configdata = handler.GetConfigData(Lookup)
-    #FILELOCATIONS =['/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/main.c' ,
-    #'/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/MMINIT.c',
-    #'/home/patricija/Namizje/AVR/PortManipulation/PortManipulation/systime.c']
+
     CPU = Configdata [0]
     FILELOCATIONS = Configdata[1]
 
@@ -29,53 +27,40 @@ def Compile(projectConfigLocation):
 
     for i in range(0,len(FILELOCATIONS)):
         tmp = FILELOCATIONS[i] # Fetches the path to a .c file and stores it into a temporary file
-        tmp = tmp[:-2] + 'o' # Changes the files type from .c to .o (ONLY IN A STRING, NOT ON ACTUAL FILE)
+        tmp = tmp[:-1] + 'o' # Changes the files type from .c to .o (ONLY IN A STRING, NOT ON ACTUAL FILE)
         COMPILEFILES.append(tmp) # Appends the previously edited string into an array
 
-
-    if len(FILELOCATIONS) == 1:
-        PROJECTLOCATION = PROJECTLOCATION.replace('project.elf','project.hex')
-        CompileString = 'avr-gcc -c -mmcu=' + CPU + ' -o  ' +PROJECTLOCATION   + ' ' + FILELOCATIONS[i] # Generates the compile command for the current file
+    for i in range(0, len(FILELOCATIONS)):
+        CompileString = 'avr-gcc -Wall -g -Os -c -mmcu=' + CPU +' ' + FILELOCATIONS[i] +' -o ' + COMPILEFILES[i]  # Generates the compile command for the current file
+        print("\n \n "+CompileString+"\n\n")
         proc = subprocess.Popen(shlex.split(CompileString), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()  # Runs the compile command
         print(out)
         print(err)
 
-    elif len(FILELOCATIONS) > 1:
-        for i in range(0, len(FILELOCATIONS)):
-            CompileString = 'avr-gcc -c -mmcu=' + CPU + ' -o ' + COMPILEFILES[i] + ' ' + FILELOCATIONS[i]  # Generates the compile command for the current file
-            print(CompileString)
-            proc = subprocess.Popen(shlex.split(CompileString), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = proc.communicate()  # Runs the compile command
-            print(out)
-            print(err)
+    LinkString = "avr-gcc -mmcu=" + CPU +" "# Header of the link command
 
-        LinkString = "avr-gcc -mmcu=" + CPU + " -o " # Header of the link command
+    for i in range(0,len(FILELOCATIONS)):
+        print(COMPILEFILES[len(FILELOCATIONS)- 1 - i] + "\n")
+        LinkString += COMPILEFILES[len(FILELOCATIONS)- 1 - i] + " " # Appends the file locations of the compiled files (.o)
 
-        for i in range(0,len(FILELOCATIONS)):
-            LinkString += COMPILEFILES[len(FILELOCATIONS)- 1 - i] + " " # Appends the file locations of the compiled files (.o)
-
-        LinkString += " -o " + PROJECTLOCATION # Appends the the file with the location of the project.elf file
-
-        # Converts project.elf into project.hex
-        HexString = "avr-objcopy -O ihex -j .text -j .data " + PROJECTLOCATION + " " + PROJECTLOCATION.replace('project.elf','project.hex')
-
-        print (LinkString)
-        print(HexString)
-        # Runs the link command
-        proc = subprocess.Popen(shlex.split(LinkString), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = proc.communicate()
-        print(out)
-        print(err)
-        # Runs the convert command
-        proc = subprocess.Popen(shlex.split(HexString), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = proc.communicate()
-        print(out)
-        print(err)
-    else:
-        print("NO FILES SELECTED!")
-
-
+    LinkString += " -o " + PROJECTLOCATION # Appends the the file with the location of the project.elf file
+    print("\n \n " + LinkString + "\n\n")
+    # Converts project.elf into project.hex
+    HexString = "avr-objcopy -O ihex -j .text -j .data " + PROJECTLOCATION + " " + PROJECTLOCATION.replace('project.elf','project.hex')
+    print("\n \n " + HexString + "\n\n")
+    print (LinkString)
+    print(HexString)
+    # Runs the link command
+    proc = subprocess.Popen(shlex.split(LinkString), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    print(out)
+    print(err)
+    # Runs the convert command
+    proc = subprocess.Popen(shlex.split(HexString), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    print(out)
+    print(err)
 
 def Upload(projectConfigLocation):
     if not projectConfigLocation:
@@ -92,6 +77,7 @@ def Upload(projectConfigLocation):
     # It has to be run with sudo otherwise the command might not be permited to execute
     UploadString = "sudo avrdude -p " + CPUTYPE + " -c " + PROGTYPE + " -P " + PROGLOCATION + " -b " + BAUD + ' -U flash:w:' + PROJECTLOCATION
     # Runs the upload script
+    print(UploadString)
     proc = subprocess.Popen(shlex.split(UploadString), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
     print(out)

@@ -16,7 +16,7 @@ class Setup(QMainWindow):
         self.width = 670
         self.height = 300
         self.setFixedSize(self.width, self.height)
-        self.setStyleSheet("background-color: rgb(20, 20, 20)")
+        self.setStyleSheet("background-color: rgb(55, 55, 55)")
         self.form_widget = SetupLayout(self)
         self.setCentralWidget(self.form_widget)
 
@@ -27,11 +27,11 @@ class SetupLayout(QWidget):
 
         layout = QGridLayout()
         self.left = QFrame(self)
-        self.left.setStyleSheet("background-color: rgb(200, 40, 40)")
+        self.left.setStyleSheet("background-color: rgb(90, 90, 90)")
         self.rightBottom = QFrame(self)
-        self.rightBottom.setStyleSheet("background-color: rgb(40, 40, 200)")
+        self.rightBottom.setStyleSheet("background-color: rgb(90, 90, 90)")
         self.rightTop = QFrame(self)
-        self.rightTop.setStyleSheet("background-color: rgb(40, 200, 40)")
+        self.rightTop.setStyleSheet("background-color: rgb(90, 90, 90)")
         self.filesInProject = QPlainTextEdit(self.rightTop)
         self.filesInProject.resize(self.rightTop.frameGeometry().width() + 90, self.rightTop.frameGeometry().height() + 110)
         layout.addWidget(self.left,0,0, 2, 5)
@@ -122,12 +122,12 @@ class MainWindow(QMainWindow):
 
         self.setGeometry(250, 250, 1000, 1000)
         self.setWindowTitle("Megaforce AVR IDE")
-        self.setStyleSheet("background-color: rgb(200, 255, 255)")
+        self.setStyleSheet("background-color: rgb(90, 90 , 90)")
         self.form_widget = Ui(self)
         self.setCentralWidget(self.form_widget)
 
         mainMenu = self.menuBar()
-        mainMenu.setStyleSheet("background-color: rgb(0qpl, 255, 255)")
+        mainMenu.setStyleSheet("background-color: rgb(55, 55, 55)")
         fileMenu = mainMenu.addMenu('Aplication')
         Tools = mainMenu.addMenu('Tools')
         helpMenu = mainMenu.addMenu('Help')
@@ -177,9 +177,9 @@ class MainWindow(QMainWindow):
     def fileSave(self):
         print()
     def __Compile(self):
-        Megaforce.Comile("Test","test")
+        print()
     def __Upload(self):
-        Megaforce.Upload('test',"test","test","test","m")
+        print()
 
 class Ui(QWidget):
 
@@ -198,20 +198,20 @@ class Ui(QWidget):
         self.path = None
 
         self.frame.resize(100,100)
-        self.frame.setStyleSheet("background-color: rgb(200, 255, 255)")
+        self.frame.setStyleSheet("background-color: rgb(90, 90, 90)")
 
         self.frame2 = QFrame()
         self.frame2.resize(50, 50)
-        self.frame2.setStyleSheet("background-color: rgb(0, 255, 255)")
+        self.frame2.setStyleSheet("background-color: rgb(90, 90, 90)")
 
         self.frame4 = QFrame()
         self.frame4.resize(50, 25)
-        self.frame4.setStyleSheet("background-color: rgb(255, 105, 0)")
+        self.frame4.setStyleSheet("background-color: rgb(90, 90, 90)")
 
         self.treeview = QTreeView(self.frame4)
         self.listview = QListView(self.frame2)
         path = QDir.rootPath()
-
+        print("\n"+path)
         self.dirModel = QFileSystemModel()
         self.dirModel.setRootPath(QDir.rootPath())
         self.dirModel.setFilter(QDir.NoDotAndDotDot | QDir.AllDirs)
@@ -230,10 +230,10 @@ class Ui(QWidget):
         self.frame3 = QFrame()
         self.logs = QPlainTextEdit(self.frame3)
 
-        self.logs.resize(self.frame3.frameGeometry().width() + 50, self.frame3.frameGeometry().height()/2)
+        self.logs.resize(self.frame3.frameGeometry().width() + 60, self.frame3.frameGeometry().height()/2 + 20)
         self.frame3.resize(50, 25)
 
-        self.frame3.setStyleSheet("background-color: rgb(40, 40, 40)")
+        self.frame3.setStyleSheet("background-color: rgb(90, 90, 90)")
 
         font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
         font.setPointSize(12)
@@ -246,6 +246,7 @@ class Ui(QWidget):
 
         self.frame5 = QFrame()
         self.frame5.resize(50, 25)
+        self.New = QPushButton('New file', self.frame5)
         self.Save = QPushButton('Save', self.frame5)
         self.Save.clicked.connect(self.saveFile)
         self.Load = QPushButton('Load', self.frame5)
@@ -257,12 +258,13 @@ class Ui(QWidget):
         self.Compile = QPushButton('Compile', self.frame5)
         self.Compile.clicked.connect(self.CompileProject)
 
-        self.Save.move(0, 0)
-        self.Load.move(0, 30)
-        self.Setup.move(0, 60)
-        self.Upload.move (0, 90)
-        self.Compile.move(0,120)
-        self.frame5.setStyleSheet("background-color: rgb(0, 155, 0)")
+        self.New.move(0,0)
+        self.Save.move(0, 30)
+        self.Load.move(0, 60)
+        self.Setup.move(0, 90)
+        self.Upload.move (0, 120)
+        self.Compile.move(0,150)
+        self.frame5.setStyleSheet("background-color: rgb(90, 90, 90)")
 
         layout.addWidget(self.frame,0,0, 2, 5)
         layout.addWidget(self.frame2,1,5,1,2)
@@ -312,6 +314,23 @@ class Ui(QWidget):
         self.editor.insertPlainText(file.read())
         file.close()
         self.logs.insertPlainText("File read successfully \n")
+        print(fileName)
+        fileName = os.path.dirname(os.path.abspath(fileName))
+        print(fileName)
+        self.listview.setRootIndex(self.fileModel.setRootPath(fileName))
+
+
+        tmp = 0
+        for i in range (0,len(fileName)):
+            tmp += 1
+            if(fileName[len(fileName) - 1 - i] == "/"):
+                tmp -= 1
+                fileName = fileName[:-tmp]
+                break
+        print(fileName)
+        self.treeview.setRootIndex(self.dirModel.index(fileName))
+
+
 
     @pyqtSlot()
     def CompileProject(self):
